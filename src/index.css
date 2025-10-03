@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+.input {
+  border-width: 1px;
+  border-style: solid;
+  border-color: #e5e7eb; /* Tailwind's default border color */
+  border-radius: 0.25rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  width: 100%;
+}
+
+.btn {
+  background-color: #2563eb; /* Tailwind's bg-blue-600 */
+  color: #fff;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.25rem;
+}
