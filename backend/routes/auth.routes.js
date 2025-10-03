@@ -30,7 +30,12 @@ router.post('/login',
   body('password').exists(),
   async (req,res,next) => {
     try {
-      const errors = validationResult(req); if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+      console.log('Login request body:', req.body); // Debug log
+      const errors = validationResult(req); 
+      if (!errors.isEmpty()) {
+        console.log('Login validation errors:', errors.array()); // Debug log
+        return res.status(400).json({ errors: errors.array() });
+      }
       const { email, password } = req.body;
       const user = await User.findOne({ email });
       if (!user) return res.status(400).json({ error: 'Invalid credentials' });
