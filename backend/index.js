@@ -32,39 +32,32 @@ app.use('/api/v1/tasks', tasksRouter);
 
 export const connectDB = async (uri) => {
     try {
+        if (!uri) {
+            console.log('No MongoDB URI provided, skipping connection');
+            return;
+        }
         await mongoose.connect(uri);
         console.log('MongoDB connected successfully');
     } catch (err) {
         console.error('MongoDB connection error', err);
-        throw err;
+        // Just log the error, don't crash the app
     }
 };
 
 // Add error handler AFTER routes
 app.use(errorHandler);
 
-// Connect to MongoDB when app starts
+// Initialize MongoDB connection for production
 if (process.env.MONGO_URI) {
-    connectDB(process.env.MONGO_URI);
+    connectDB(process.env.MONGO_URI).catch(err => {
+        console.error('MongoDB connection failed:', err);
+    });
 }
 
-const start = async () => {
-    try {
-        if (!process.env.VERCEL) {
-            // Only start server locally, Vercel handles this
-            await connectDB(process.env.MONGO_URI);
-            app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
-        }
-    } catch (err) {
-        console.error('Failed to start', err);
-        process.exit(1);
-    }
-};
+// Start server (for both local and production)
+const server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
 
 // Export for Vercel
 export default app;
-
-// Start server only if not on Vercel
-if (!process.env.VERCEL) {
-    start();
-}
