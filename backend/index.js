@@ -11,21 +11,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://taks-frontend-gamma.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Allow all CORS - simple and works everywhere
+app.use(cors());
 app.use(express.json());
 
+// Handle preflight requests
+app.options('*', cors());
+
 app.get("/", (req, res) => {
-    res.json({ message: "Task Management API is running!" });  
+    res.json({ 
+        message: "Task Management API is running!",
+        timestamp: new Date().toISOString(),
+        cors: "enabled"
+    });  
 });
 
 app.use('/api/v1/auth', authRouter);
