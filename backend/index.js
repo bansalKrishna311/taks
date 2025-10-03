@@ -19,11 +19,20 @@ app.use(express.json());
 app.options('*', cors());
 
 app.get("/", (req, res) => {
-    res.json({ 
-        message: "Task Management API is running!",
-        timestamp: new Date().toISOString(),
-        cors: "enabled"
-    });  
+    try {
+        res.json({ 
+            message: "Task Management API is running!",
+            timestamp: new Date().toISOString(),
+            cors: "enabled",
+            env: {
+                hasMongoUri: !!process.env.MONGO_URI,
+                hasJwtSecret: !!process.env.JWT_SECRET,
+                isVercel: !!process.env.VERCEL
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 app.use('/api/v1/auth', authRouter);
@@ -47,17 +56,26 @@ export const connectDB = async (uri) => {
 // Add error handler AFTER routes
 app.use(errorHandler);
 
-// Initialize MongoDB connection for production
-if (process.env.MONGO_URI) {
-    connectDB(process.env.MONGO_URI).catch(err => {
-        console.error('MongoDB connection failed:', err);
+// Initialize MongoDB connection
+const initDB = async () => {
+    if (process.env.MONGO_URI) {
+        try {
+            await connectDB(process.env.MONGO_URI);
+        } catch (err) {
+            console.error('MongoDB init failed:', err);
+        }
+    }
+};
+
+// Initialize DB
+initDB();
+
+// Start server only in development
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
     });
 }
-
-// Start server (for both local and production)
-const server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
 
 // Export for Vercel
 export default app;
