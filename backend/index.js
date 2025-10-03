@@ -11,28 +11,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Allow all CORS - simple and works everywhere
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 
-// Handle preflight requests
-app.options('*', cors());
-
 app.get("/", (req, res) => {
-    try {
-        res.json({ 
-            message: "Task Management API is running!",
-            timestamp: new Date().toISOString(),
-            cors: "enabled",
-            env: {
-                hasMongoUri: !!process.env.MONGO_URI,
-                hasJwtSecret: !!process.env.JWT_SECRET,
-                isVercel: !!process.env.VERCEL
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+    res.json({ message: "Task Management API is running!" });  
 });
 
 app.use('/api/v1/auth', authRouter);
@@ -41,41 +27,39 @@ app.use('/api/v1/tasks', tasksRouter);
 
 export const connectDB = async (uri) => {
     try {
-        if (!uri) {
-            console.log('No MongoDB URI provided, skipping connection');
-            return;
-        }
         await mongoose.connect(uri);
         console.log('MongoDB connected successfully');
     } catch (err) {
         console.error('MongoDB connection error', err);
-        // Just log the error, don't crash the app
+        throw err;
     }
 };
 
 // Add error handler AFTER routes
 app.use(errorHandler);
 
-// Initialize MongoDB connection
-const initDB = async () => {
-    if (process.env.MONGO_URI) {
-        try {
+// Connect to MongoDB when app starts
+if (process.env.MONGO_URI) {
+    connectDB(process.env.MONGO_URI);
+}
+
+const start = async () => {
+    try {
+        if (!process.env.VERCEL) {
+            // Only start server locally, Vercel handles this
             await connectDB(process.env.MONGO_URI);
-        } catch (err) {
-            console.error('MongoDB init failed:', err);
+            app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
         }
+    } catch (err) {
+        console.error('Failed to start', err);
+        process.exit(1);
     }
 };
 
-// Initialize DB
-initDB();
-
-// Start server only in development
-if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-}
-
 // Export for Vercel
 export default app;
+
+// Start server only if not on Vercel
+if (!process.env.VERCEL) {
+    start();
+}
