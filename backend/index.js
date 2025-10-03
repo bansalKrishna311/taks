@@ -3,9 +3,16 @@ import dotenv from "dotenv";
 import express from "express";
 
 
-export const connect_db = async() =>{
-    
-}
+export const connectDB = async (uri) => {
+  try {
+    await mongoose.connect(uri);
+    console.log('MongoDB connected successfully');
+  } catch (err) {
+    console.error('MongoDB connection error', err);
+    throw err;
+  }
+};
+
 dotenv.config();
 
 const app = express();
@@ -15,6 +22,17 @@ app.get("/", (req, res) => {
   res.send("Hello World");  
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+
+
+
+const start = async () => {
+  try {
+    await connectDB(process.env.MONGO_URI);
+    app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+  } catch (err) {
+    console.error('Failed to start', err);
+    process.exit(1);
+  }
+};
+
+start();
